@@ -1,3 +1,9 @@
+#define SIG_DFL 0   // Defualt signal handling
+#define SIG_IGN 1   // Ignore signal
+#define SIGKILL 9   // Kill Signal
+#define SIGSTOP 17  // Stop Signal
+#define SIGCONT 19  // Continue Signal
+#define SIG_MAX 32
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -49,6 +55,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  void *handlers[SIG_MAX];     // Signal handlers
+  uint sig_masks[SIG_MAX];     // Signals mask array
+  int stopped;                 // Indicates if process has been stopped
 };
 
 // Process memory is laid out contiguously, low addresses first:
