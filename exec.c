@@ -92,7 +92,12 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
-
+  for(i = 0; i < 32; i++){
+    if(curproc->handlers[i] != (void*) SIG_IGN){
+      curproc->handlers[i] =  SIG_DFL;
+      curproc->sig_masks[i] = 0;
+    }
+  }
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
