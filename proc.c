@@ -532,3 +532,8 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int
+sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
+  return 22;
+}

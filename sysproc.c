@@ -89,3 +89,17 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_sigaction(void)
+{
+  int signum;
+  char *act, *oldact;
+  if(argint(0, &signum) < 0)
+    return -1;
+  if(argptr(1, &act, sizeof(act)) < 0)
+    return -1;
+  if(argptr(1, &oldact, sizeof(oldact)) < 0)
+    return -1;
+  return sigaction(signum, (struct sigaction *)act, (struct sigaction *)oldact);
+}
