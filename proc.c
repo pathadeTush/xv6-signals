@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include <stddef.h>
 
 struct {
   struct spinlock lock;
@@ -535,5 +536,14 @@ procdump(void)
 
 int
 sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
-  return 22;
+  struct proc *curproc = myproc();
+  if(signum < 0 || signum > 31)
+    return -1;
+  if(act != NULL){
+    curproc->handlers[signum] = act->sa_handler;
+  }
+  if(oldact != NULL){
+    oldact->sa_handler = curproc->handlers[signum];
+  }
+  return 0;
 }
