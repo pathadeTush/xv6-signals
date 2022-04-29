@@ -548,7 +548,7 @@ sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
   struct proc *curproc = myproc();
   if(signum < 0 || signum > 31)
     return -1;
-  if(signum == SIGSTOP || signum == SIGKILL) // they cannot be modified, blocked or ignored
+  if(signum == SIGSTOP || signum == SIGKILL) // SIGKILL & SIGSTOP can't be ignore
     return 1;
 
   if(oldact != NULL){
@@ -560,6 +560,7 @@ sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
     curproc->handlers[signum] = act->sa_handler;
   }
 
+  // cast void ptr (handlers[signum]) to struct sigaction *
   ((struct sigaction*)&curproc->handlers[signum])->sa_handler = act->sa_handler;
   ((struct sigaction*)&curproc->handlers[signum])->sigmask = act->sigmask;
 
@@ -581,15 +582,22 @@ handler1(void){
 
 void
 df_sighandler(struct proc * p, int signum){
-  cprintf("\n===== Default signal handler called! ====\n");
-  if(p->handlers[signum] == SIG_DFL)
+  if(p->handlers[signum] == SIG_DFL){
+    p->pending[signum] = 0;
     return;
+  }
   // assuming all signum = 18 is only overrided by user
-  if(signum == 18)
+  if(signum == 18){
+    cprintf("\n===== Calling user handler for signal %d ====\n", signum);
+    p->pending[signum] = 0;
     user_handler(p, signum);
+  }
   // assuming all signum other than 18 aren't overrided
-  else
+  else{
+    cprintf("\n===== Calling default handler for signal %d ====\n", signum);
+    p->pending[signum] = 0;
     handler1();
+  }
   return;
 }
 

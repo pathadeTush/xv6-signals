@@ -111,7 +111,6 @@ trap(struct trapframe *tf)
         if(myproc()->pending[i] == 0)
           continue;
         df_sighandler(myproc(), i);
-        break;
       }
     }
   }
