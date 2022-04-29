@@ -8,6 +8,9 @@
 #include "spinlock.h"
 #include <stddef.h>
 
+extern void sigret_fn_end(void);
+extern void sigret_fn_start(void);
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -484,9 +487,14 @@ kill(int pid, int signum)
 
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    // cprintf("\nin kill  signum: %d\n", signum);
     if(p->pid == pid){
-      p->killed = 1;
-      p->pending[signum] = 1;
+      if(signum == SIGKILL || signum == SIGSTOP){
+        p->killed = 1;
+        cprintf("\n in kill signum matched\n\n");
+      }
+      else
+        p->pending[signum] = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;
@@ -547,4 +555,59 @@ sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
     oldact->sa_handler = curproc->handlers[signum];
   }
   return 0;
+}
+
+int
+sigret(void){
+  struct proc *curproc = myproc();
+  memmove(curproc->tf, curproc->backuptf, sizeof(struct trapframe));
+  return 0;
+}
+
+void
+handler1(void){
+  cprintf("I'm handler1 called from df_handler\n");
+  return;
+}
+
+void
+df_sighandler(struct proc * p, int signum){
+  cprintf("\n===== Default signal handler called! ====\n");
+  if(p->handlers[signum] == SIG_DFL)
+    return;
+  // assuming all signum = 18 is only overrided by user
+  if(signum == 18)
+    user_handler(p, signum);
+  // assuming all signum other than 18 aren't overrided
+  else
+    handler1();
+  return;
+}
+
+void
+user_handler(struct proc *p, int signum){
+  uint sigret_code_sz;
+  char *sigret_fn_addr;
+
+  cprintf("In user handler\n");
+  // take backup of current tf
+  memmove(p->kstack, p->tf, sizeof(*(p->tf)));
+  p->backuptf = (struct trapframe *)p->kstack;
+
+  // store sigret code on user stack
+  sigret_code_sz = sigret_fn_end - sigret_fn_start;
+  p->tf->esp -= sigret_code_sz;
+  memmove((char *)p->tf->esp, sigret_fn_start, sigret_code_sz);
+
+  // get sigret fn addr
+  sigret_fn_addr = (char *)p->tf->esp;
+
+  // store sigret fun addr on user stack as return addr for handler functions
+  p->tf->esp -= sizeof(uint);
+  *((uint*)(p->tf->esp)) = (uint)sigret_fn_addr;
+
+  p->pending[signum] = 0;
+  p->tf->eip = (uint)*(&p->handlers[signum]);
+
+  return;
 }

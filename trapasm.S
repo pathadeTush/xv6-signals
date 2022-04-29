@@ -1,4 +1,6 @@
 #include "mmu.h"
+#include "syscall.h"
+#include "traps.h"
 
   # vectors.S sends all traps here.
 .globl alltraps
@@ -30,3 +32,10 @@ trapret:
   popl %ds
   addl $0x8, %esp  # trapno and errcode
   iret
+
+.globl sigret_fn_start
+.globl sigret_fn_end
+sigret_fn_start:
+  movl $SYS_sigret, %eax
+  int $T_SYSCALL
+sigret_fn_end:
