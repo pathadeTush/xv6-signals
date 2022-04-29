@@ -548,12 +548,21 @@ sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
   struct proc *curproc = myproc();
   if(signum < 0 || signum > 31)
     return -1;
-  if(act != NULL){
-    curproc->handlers[signum] = act->sa_handler;
-  }
+  if(signum == SIGSTOP || signum == SIGKILL) // they cannot be modified, blocked or ignored
+    return 1;
+
   if(oldact != NULL){
     oldact->sa_handler = curproc->handlers[signum];
+    oldact->sigmask = ((struct sigaction*)&curproc->handlers[signum])->sigmask; // old sigmask
   }
+  if(act != NULL){
+    cprintf("In SIGACTION: %d, addr: %d\n", signum, act->sa_handler);
+    curproc->handlers[signum] = act->sa_handler;
+  }
+
+  ((struct sigaction*)&curproc->handlers[signum])->sa_handler = act->sa_handler;
+  ((struct sigaction*)&curproc->handlers[signum])->sigmask = act->sigmask;
+
   return 0;
 }
 
