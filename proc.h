@@ -58,6 +58,7 @@ struct proc {
   void *handlers[SIG_MAX];     // Signal handlers
   uint pending[SIG_MAX];       // Pending signals
   uint sig_masks[SIG_MAX];     // Signals mask array
+  struct trapframe *backuptf;  // backup of tf
   int stopped;                 // Indicates if process has been stopped
 };
 

@@ -33,7 +33,7 @@ sys_kill(void)
 
   if(argint(0, &pid) < 0)
     return -1;
-  if(argint(0, &signum) < 0)
+  if(argint(1, &signum) < 0)
     return -1;
   return kill(pid, signum);
 }
@@ -42,6 +42,12 @@ int
 sys_getpid(void)
 {
   return myproc()->pid;
+}
+
+int
+sys_getppid(void)
+{
+  return myproc()->parent->pid;
 }
 
 int
@@ -104,4 +110,9 @@ sys_sigaction(void)
   if(argptr(1, &oldact, sizeof(oldact)) < 0)
     return -1;
   return sigaction(signum, (struct sigaction *)act, (struct sigaction *)oldact);
+}
+
+int
+sys_sigret(void){
+  return sigret();
 }

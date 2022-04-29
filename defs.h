@@ -122,6 +122,10 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int             sigaction(int, const struct sigaction*, struct sigaction*);
+void            df_sighandler(struct proc * p, int signum);
+void            handler1(void);
+int             sigret(void);
+void            user_handler(struct proc *p, int signum);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
