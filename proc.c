@@ -580,6 +580,19 @@ sigret(void){
   return 0;
 }
 
+void look_for_pending_signal(void){
+  struct proc *curproc = myproc();
+  if(curproc){
+    int i = 0;
+    for(i = 0; i < SIG_MAX; i++){
+      if((curproc->sigmask & (1 << i)) || !(curproc->pending & (1 << i)))
+        continue;
+      df_sighandler(curproc, i);
+    }
+  }
+  return;
+}
+
 void
 df_sighandler(struct proc * p, int signum){
   if(p->handlers[signum] == SIG_DFL){
@@ -640,6 +653,7 @@ void
 sigstop(void){
   acquire(&ptable.lock);
   myproc()->state = SLEEPING;
+  sched();
   release(&ptable.lock);
   return;
 }

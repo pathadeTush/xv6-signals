@@ -36,7 +36,6 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
-  int i = 0;
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();
@@ -106,15 +105,7 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER){
     yield();
-    if(myproc()){
-      struct proc *curproc = myproc();
-      for(i = 0; i < SIG_MAX; i++){
-        if(!(curproc->pending & (1 << i)))
-          continue;
-        cprintf("pending found: %d\n", i);
-        df_sighandler(curproc, i);
-      }
-    }
+    look_for_pending_signal();
   }
 
   // Check if the process has been killed since we yielded

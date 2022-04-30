@@ -129,6 +129,7 @@ void            user_handler(struct proc *p, int signum);
 void            sigstop(void);
 void            sigcont(void);
 int             sigprocmask(uint);
+void            look_for_pending_signal(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
