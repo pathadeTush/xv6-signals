@@ -56,8 +56,8 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   void *handlers[SIG_MAX];     // Signal handlers
-  uint pending[SIG_MAX];       // Pending signals
-  uint sigmask;                // Signals mask
+  uint pending;                // Pending signals
+  uint sigmask;     // Signals mask array
   struct trapframe *backuptf;  // backup of tf
   int stopped;                 // Indicates if process has been stopped
 };

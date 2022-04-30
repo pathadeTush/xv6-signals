@@ -107,10 +107,12 @@ trap(struct trapframe *tf)
      tf->trapno == T_IRQ0+IRQ_TIMER){
     yield();
     if(myproc()){
+      struct proc *curproc = myproc();
       for(i = 0; i < SIG_MAX; i++){
-        if(myproc()->pending[i] == 0)
+        if(!(curproc->pending & (1 << i)))
           continue;
-        df_sighandler(myproc(), i);
+        cprintf("pending found: %d\n", i);
+        df_sighandler(curproc, i);
       }
     }
   }

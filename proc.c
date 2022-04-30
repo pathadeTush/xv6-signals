@@ -487,14 +487,11 @@ kill(int pid, int signum)
 
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    // cprintf("\nin kill  signum: %d\n", signum);
     if(p->pid == pid){
-      if(signum == SIGKILL || signum == SIGSTOP){
+      if(signum == SIGKILL)
         p->killed = 1;
-        cprintf("\n in kill signum matched\n\n");
-      }
       else
-        p->pending[signum] = 1;
+        p->pending |= (1 << signum);
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;
@@ -584,28 +581,29 @@ sigret(void){
 }
 
 void
-handler1(void){
-  cprintf("I'm handler1 called from df_handler\n");
-  return;
-}
-
-void
 df_sighandler(struct proc * p, int signum){
   if(p->handlers[signum] == SIG_DFL){
-    p->pending[signum] = 0;
-    return;
+    p->pending ^= (1 << signum);
+    cprintf("\n===== Calling default handler for signal %d ====\n", signum);
+    switch(signum){
+      case SIG_IGN:
+        cprintf("SIG_IGN do nothing....\n");
+        break;
+      case SIGSTOP:
+        cprintf("SIGSTOP called...\n");
+        sigstop();
+        break;
+      case SIGCONT:
+        cprintf("SIGCONT called...\n");
+        sigcont();
+        break;
+    }
   }
   // assuming all signum = 18 is only overrided by user
-  if(signum == 18){
-    cprintf("\n===== Calling user handler for signal %d ====\n", signum);
-    p->pending[signum] = 0;
-    user_handler(p, signum);
-  }
-  // assuming all signum other than 18 aren't overrided
   else{
-    cprintf("\n===== Calling default handler for signal %d ====\n", signum);
-    p->pending[signum] = 0;
-    handler1();
+    cprintf("\n===== Calling user handler for signal %d ====\n", signum);
+    p->pending ^= (1 << signum);
+    user_handler(p, signum);
   }
   return;
 }
@@ -632,8 +630,25 @@ user_handler(struct proc *p, int signum){
   p->tf->esp -= sizeof(uint);
   *((uint*)(p->tf->esp)) = (uint)sigret_fn_addr;
 
-  p->pending[signum] = 0;
+  // assign handler address as eip of curproc to run handler in next instruction
   p->tf->eip = (uint)*(&p->handlers[signum]);
 
+  return;
+}
+
+void
+sigstop(void){
+  acquire(&ptable.lock);
+  myproc()->state = SLEEPING;
+  release(&ptable.lock);
+  return;
+}
+
+void
+sigcont(void){
+  acquire(&ptable.lock);
+  myproc()->state = RUNNABLE;
+  sched();
+  release(&ptable.lock);
   return;
 }
