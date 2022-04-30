@@ -3,7 +3,6 @@
 #include "user.h"
 #include "fs.h"
 #include <stddef.h>
-#define SIGTEST 18
 
 void custom_handler()
 {
@@ -11,30 +10,38 @@ void custom_handler()
   return;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-  int pid, ppid;
+  if (argc != 2)
+  {
+    printf(1, "Usage: testSignal signum\n");
+    exit();
+  }
+  int pid, ppid, signum;
+  signum = atoi(argv[1]);
   pid = fork();
   if (pid == 0)
   {
     sleep(200);
     ppid = getppid();
     printf(1, "parents pid = %d\n", ppid);
-    kill(ppid, 18);
+    kill(ppid, signum);
     printf(1, "Signal Sent\n");
-    sleep(200); // sleep child so that parent will keep waiting for wait() to return
+    // sleep(1000);
+    kill(ppid, 19);
     printf(1, "child working its next cmd\n");
   }
   else
   {
-    struct sigaction act;
-    act.sa_handler = &custom_handler;
-    act.sigmask = 0;
-    sigaction(18, &act, NULL);
+    // struct sigaction act;
+    // act.sa_handler = &custom_handler;
+    // act.sigmask = 0;
+    // sigaction(signum, &act, NULL);
     printf(1, "Parent\n");
     wait();
     printf(1, "child done.\n");
     printf(1, "now parent exiting...\n");
   }
+
   exit();
 }
