@@ -126,6 +126,7 @@ void            df_sighandler(struct proc * p, int signum);
 void            handler1(void);
 int             sigret(void);
 void            user_handler(struct proc *p, int signum);
+int             sigprocmask(uint);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

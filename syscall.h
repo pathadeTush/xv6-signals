@@ -23,3 +23,4 @@
 #define	SYS_sigaction 22
 #define SYS_getppid 23
 #define SYS_sigret 24
+#define SYS_sigprocmask 25

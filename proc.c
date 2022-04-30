@@ -568,6 +568,15 @@ sigaction(int signum, const struct sigaction *act, struct sigaction *oldact){
 }
 
 int
+sigprocmask(uint new_sigmask)
+{
+  struct proc *curproc = myproc();
+  uint old = curproc->sigmask;
+  curproc->sigmask = new_sigmask;
+  return old;
+}
+
+int
 sigret(void){
   struct proc *curproc = myproc();
   memmove(curproc->tf, curproc->backuptf, sizeof(struct trapframe));

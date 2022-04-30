@@ -114,6 +114,15 @@ sys_sigaction(void)
 }
 
 int
+sys_sigprocmask(void)
+{
+  uint new_mask;
+  if (argint(0, (int*)&new_mask) < 0)
+    return -1;
+  return sigprocmask(new_mask);
+}
+
+int
 sys_sigret(void){
   return sigret();
 }
