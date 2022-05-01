@@ -5,6 +5,8 @@
 #include <stddef.h>
 
 #define SIGKILL 9
+#define SIGSTOP 17
+#define SIGCONT 19
 #define SLEEP_TIME 100
 
 typedef struct testcase
@@ -12,47 +14,61 @@ typedef struct testcase
   int signum;
   char *name;
   char kill_call_required;
+  char override_df_handler;
+  struct sigaction *s;
 } testcase;
 
-void custom_handler()
+void sigdfl_handler()
 {
-  printf(1, "Custom Handler Called!\n");
+  printf(1, "--- SIG_DFL Custom Handler Called!\n");
   return;
 }
 
-int test_testcase(testcase t)
+void sigign_handler()
 {
-  printf(1, "\n====== testing %s ======\n", t.name);
+  printf(1, "--- SIG_IGN Custom Handler Called!\n");
+  return;
+}
+
+void sigcont_handler()
+{
+  printf(1, "--- SIG_CONT Custom Handler Called!\n");
+  return;
+}
+
+void test_testcase(testcase t)
+{
+  printf(1, "\n=============== testing %s ===============\n", t.name);
   int pid;
   pid = fork();
   if (pid == 0)
   {
     pid = getpid();
     printf(1, "childs pid = %d\n", pid);
+    if(t.override_df_handler){
+      sigaction(t.signum, t.s, NULL);
+    }
     while (1);
   }
   else
   {
-    printf(1, "parent\n");
     sleep(SLEEP_TIME);
-    printf(1, "pid: %d\n", pid);
     kill(pid, t.signum); // stop the child process
     if (t.kill_call_required)
     {
       sleep(SLEEP_TIME);
       kill(pid, SIGKILL); // kill the child process
-      printf(1, "sent kill signal to child\n");
     }
     wait();
     printf(1, "child exited.\n");
     printf(1, "now parent exiting...\n");
   }
-  printf(1, "====== %s passed :) ======\n", t.name);
-  return 1;
+  printf(1, "=============== %s passed :) ===============\n", t.name);
+  return;
 }
 
-int test_sigprocmask(){
-  printf(1, "\n====== testing sigprocmask ======\n");
+void test_sigprocmask(){
+  printf(1, "\n=============== testing sigprocmask ===============\n");
   int pid, signum_to_be_masked = 19;
   pid = fork();
   if (pid == 0)
@@ -65,7 +81,6 @@ int test_sigprocmask(){
   }
   else
   {
-    printf(1, "parent\n");
     sleep(SLEEP_TIME);
     printf(1, "pid: %d\n", pid);
     printf(1, "calling masked signal %d\n", signum_to_be_masked);
@@ -76,33 +91,86 @@ int test_sigprocmask(){
     printf(1, "child exited.\n");
     printf(1, "now parent exiting...\n");
   }
-  printf(1, "====== sigprocmask passed :) ======\n");
-  return 1;
+  printf(1, "\n=============== sigprocmask passed :) ===============\n");
+  return;
+}
+
+void test_pause(){
+  printf(1, "\n=============== testing pause ===============\n");
+  int pid;
+  pid = fork();
+  if (pid == 0)
+  {
+    pid = getpid();
+    printf(1, "called pause() for child process\n");
+    pause();
+    printf(1, "childs pid = %d\n", pid);
+    while (1);
+  }
+  else
+  {
+    sleep(SLEEP_TIME);
+    printf(1, "sent sigcont signal to child\n");
+    kill(pid, SIGCONT); // stop the child process
+    sleep(100);
+    printf(1, "sent kill signal to child\n");
+    kill(pid, SIGKILL);
+    wait();
+    printf(1, "child exited.\n");
+    printf(1, "now parent exiting...\n");
+  }
+  printf(1, "\n=============== pause passed :) ===============\n");
+  return;
+}
+
+testcase setup_testcase(int signum, char *name, char kill_call_required, char override_df_handler, struct sigaction *s){
+  testcase t;
+  t.signum = signum;
+  t.name = name;
+  t.kill_call_required = kill_call_required;
+  t.override_df_handler = override_df_handler;
+  t.s = s;
+  return t;
+}
+
+struct sigaction get_sigaction_struct(void *addr, int sigmask){
+  struct sigaction s;
+  s.sa_handler = addr;
+  s.sigmask = sigmask;
+  return s;
 }
 
 int main(int argc, char *argv[])
 {
-  testcase kill_test, sigstop_test, sigcont_test;
-
   // kill test
-  kill_test.kill_call_required = 0;
-  kill_test.name = "kill";
-  kill_test.signum = SIGKILL;
-  test_testcase(kill_test);
+  test_testcase(setup_testcase(SIGKILL, "kill", 0, 0, NULL));
 
   // sigstop test
-  sigstop_test.kill_call_required = 1;
-  sigstop_test.name = "sigstop";
-  sigstop_test.signum = SIGKILL;
-  test_testcase(sigstop_test);
+  test_testcase(setup_testcase(17, "sigstop", 1, 0, NULL));
 
   // sigcont test
-  sigcont_test.kill_call_required = 1;
-  sigcont_test.name = "sigcont";
-  sigcont_test.signum = SIGKILL;
-  test_testcase(sigcont_test);
+  test_testcase(setup_testcase(19, "sigcont", 1, 0, NULL));
 
+  struct sigaction s;
+  // SIG_DFL custom handler test
+  s = get_sigaction_struct(&sigdfl_handler, 0);
+  test_testcase(setup_testcase(0, "sigdfl custom handler", 1, 1, &s));
+
+  // SIG_IGN custom handler test
+  s = get_sigaction_struct(&sigign_handler, 0);
+  test_testcase(setup_testcase(1, "sigign custom handler", 1, 1, &s));
+
+  // SIG_CONT custom handler test
+  s = get_sigaction_struct(&sigcont_handler, 0);
+  test_testcase(setup_testcase(19, "sigcont custom handler", 1, 1, &s));
+
+  // pause test
+  test_pause();
+
+  // sigprocmask test
   test_sigprocmask();
 
+  for(int i = 1; i < argc; i++)
+    printf(1, "%s%s", argv[i], i+1 < argc ? " " : "\n");
   exit();
 }

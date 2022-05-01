@@ -13,6 +13,7 @@
 char buf[8192];
 char name[3];
 char *echoargv[] = { "echo", "ALL", "TESTS", "PASSED", 0 };
+char *sigargv[] = { "testSignal", "ALL", "SIGNAL", "TESTS", "PASSED", 0 };
 int stdout = 1;
 
 // does chdir() call iput(p->cwd) in a transaction?
@@ -298,7 +299,6 @@ exectest(void)
   printf(stdout, "exec test\n");
   if(exec("echo", echoargv) < 0){
     printf(stdout, "exec echo failed\n");
-    exit();
   }
 }
 
@@ -1747,6 +1747,14 @@ rand()
   return randstate;
 }
 
+void testSignal(void){
+  if(exec("testSignal", sigargv) < 0)
+    printf(1, "testSignal Failed\n");
+  else
+    printf(1, "testSignal done\n");
+  return;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1799,7 +1807,9 @@ main(int argc, char *argv[])
 
   uio();
 
-  exectest();
+  // exectest();
+
+  testSignal();
 
   exit();
 }

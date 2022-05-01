@@ -605,24 +605,23 @@ void
 df_sighandler(struct proc * p, int signum){
   if(p->handlers[signum] == SIG_DFL){
     p->pending ^= (1 << signum);
-    cprintf("\n===== Calling default handler for signal %d ====\n", signum);
+    cprintf("--- Calling default handler for signal %d \n", signum);
     switch(signum){
       case SIG_IGN:
-        cprintf("SIG_IGN do nothing....\n");
+        cprintf("--- SIG_IGN do nothing....\n");
         break;
       case SIGSTOP:
-        cprintf("SIGSTOP called...\n");
+        cprintf("--- SIGSTOP called...\n");
         sigstop();
         break;
       case SIGCONT:
-        cprintf("SIGCONT called...\n");
+        cprintf("--- SIGCONT called...\n");
         sigcont();
         break;
     }
   }
-  // assuming all signum = 18 is only overrided by user
   else{
-    cprintf("\n===== Calling user handler for signal %d ====\n", signum);
+    cprintf("--- Calling user handler for signal %d\n", signum);
     p->pending ^= (1 << signum);
     user_handler(p, signum);
   }
@@ -634,7 +633,6 @@ user_handler(struct proc *p, int signum){
   uint sigret_code_sz;
   char *sigret_fn_addr;
 
-  cprintf("In user handler\n");
   // take backup of current tf
   memmove(p->kstack, p->tf, sizeof(*(p->tf)));
   p->backuptf = (struct trapframe *)p->kstack;
