@@ -130,6 +130,7 @@ void            sigstop(void);
 void            sigcont(void);
 int             sigprocmask(uint);
 void            look_for_pending_signal(void);
+int 		pause(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

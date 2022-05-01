@@ -570,7 +570,15 @@ sigprocmask(uint new_sigmask)
   struct proc *curproc = myproc();
   uint old = curproc->sigmask;
   curproc->sigmask = new_sigmask;
+  curproc->sigmask &= ~(1 << SIGKILL);
+  curproc->sigmask &= ~(1 << SIGSTOP); // silently ignore attempts to mask SIGKILL, SIGSTOP
   return old;
+}
+
+int
+pause(void) {
+  sigstop();
+  return -1;
 }
 
 int

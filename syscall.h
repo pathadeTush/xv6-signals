@@ -24,3 +24,4 @@
 #define SYS_getppid 23
 #define SYS_sigret 24
 #define SYS_sigprocmask 25
+#define SYS_pause 26

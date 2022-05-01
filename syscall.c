@@ -107,6 +107,7 @@ extern int sys_sigaction(void);
 extern int sys_getppid(void);
 extern int sys_sigret(void);
 extern int sys_sigprocmask(void);
+extern int sys_pause(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -134,6 +135,7 @@ static int (*syscalls[])(void) = {
 [SYS_getppid]    sys_getppid,
 [SYS_sigret]   sys_sigret,
 [SYS_sigprocmask]   sys_sigprocmask,
+[SYS_pause]    sys_pause,
 };
 
 void

@@ -123,6 +123,12 @@ sys_sigprocmask(void)
 }
 
 int
+sys_pause(void)
+{
+  return pause();
+}
+
+int
 sys_sigret(void){
   return sigret();
 }
