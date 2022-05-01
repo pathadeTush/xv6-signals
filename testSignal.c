@@ -38,13 +38,13 @@ void sigcont_handler()
 
 void test_testcase(testcase t)
 {
-  printf(1, "\n=============== testing %s ===============\n", t.name);
+  printf(1, "\n=============== %s test ===============\n", t.name);
   int pid;
   pid = fork();
   if (pid == 0)
   {
     pid = getpid();
-    printf(1, "childs pid = %d\n", pid);
+    printf(1, "Child PID: %d\n", pid);
     if(t.override_df_handler){
       sigaction(t.signum, t.s, NULL);
     }
@@ -54,72 +54,74 @@ void test_testcase(testcase t)
   {
     sleep(SLEEP_TIME);
     kill(pid, t.signum); // stop the child process
+    printf(1, "Sending %d signal to child\n", t.signum);
     if (t.kill_call_required)
     {
       sleep(SLEEP_TIME);
+      printf(1, "Sending SIGKILL to child\n");
       kill(pid, SIGKILL); // kill the child process
     }
     wait();
-    printf(1, "child exited.\n");
-    printf(1, "now parent exiting...\n");
+    printf(1, "Child exited\n");
+    printf(1, "Parent exiting\n");
   }
-  printf(1, "=============== %s passed :) ===============\n", t.name);
+  printf(1, "=============== %s pass ===============\n", t.name);
   return;
 }
 
 void test_sigprocmask(){
-  printf(1, "\n=============== testing sigprocmask ===============\n");
+  printf(1, "\n=============== sigprocmask test ===============\n");
   int pid, signum_to_be_masked = 19;
   pid = fork();
   if (pid == 0)
   {
     pid = getpid();
-    printf(1, "masking %d signum\n", signum_to_be_masked);
+    printf(1, "Child PID: %d\n", pid);
+    printf(1, "Masking %d signum for child\n", signum_to_be_masked);
     sigprocmask((1 << signum_to_be_masked));
-    printf(1, "childs pid = %d\n", pid);
     while (1);
   }
   else
   {
     sleep(SLEEP_TIME);
-    printf(1, "pid: %d\n", pid);
-    printf(1, "calling masked signal %d\n", signum_to_be_masked);
-    kill(pid, signum_to_be_masked); // stop the child process
+    printf(1, "Sending signal for masked %d signum\n", signum_to_be_masked);
+    kill(pid, signum_to_be_masked);
     sleep(100);
+    printf(1, "Sending SIGKILL to child\n");
     kill(pid, SIGKILL);
     wait();
-    printf(1, "child exited.\n");
-    printf(1, "now parent exiting...\n");
+    printf(1, "Child exited\n");
+    printf(1, "Parent exiting\n");
   }
-  printf(1, "\n=============== sigprocmask passed :) ===============\n");
+  printf(1, "=============== sigprocmask pass ===============\n");
   return;
 }
 
 void test_pause(){
-  printf(1, "\n=============== testing pause ===============\n");
+  printf(1, "\n=============== pause test ===============\n");
   int pid;
   pid = fork();
   if (pid == 0)
   {
     pid = getpid();
-    printf(1, "called pause() for child process\n");
+    printf(1, "Childs PID: %d\n", pid);
+    printf(1, "Called pause() from child process\n");
     pause();
-    printf(1, "childs pid = %d\n", pid);
     while (1);
   }
   else
   {
     sleep(SLEEP_TIME);
-    printf(1, "sent sigcont signal to child\n");
-    kill(pid, SIGCONT); // stop the child process
+    printf(1, "Sent SIGCONT signal to child\n");
+    kill(pid, SIGCONT);
     sleep(100);
-    printf(1, "sent kill signal to child\n");
     kill(pid, SIGKILL);
+    printf(1, "Sent SIGKILL to child\n");
     wait();
-    printf(1, "child exited.\n");
-    printf(1, "now parent exiting...\n");
+    printf(1, "Child exited\n");
+    printf(1, "Parent exiting\n");
   }
-  printf(1, "\n=============== pause passed :) ===============\n");
+  printf(1, "=============== pause pass ===============\n");
   return;
 }
 
