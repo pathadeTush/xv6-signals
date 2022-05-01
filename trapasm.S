@@ -33,6 +33,8 @@ trapret:
   addl $0x8, %esp  # trapno and errcode
   iret
 
+  # assembly code reference to call a syscall:
+  # initcode.S, line 19 in original xv6 code
 .globl sigret_fn_start
 .globl sigret_fn_end
 sigret_fn_start:

@@ -628,6 +628,8 @@ df_sighandler(struct proc * p, int signum){
   return;
 }
 
+// useful concepts and ideas for writing user_handler from:
+// http://courses.cms.caltech.edu/cs124/lectures-wi2016/CS124Lec15.pdf
 void
 user_handler(struct proc *p, int signum){
   uint sigret_code_sz;
